@@ -30,3 +30,15 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 ##Background
 
+**Glucosamine and Chondroitin (G&C)**
+
+- One of the most popular dietary supplements in the US
+- Mostly taken for osteoarthritis (OA)
+- Associated with a 27-35% lower incidence of colorectal cancer, a 26-28% lower incidence of lung  cancer, 17% lower overall mortality, and a 13% lower cancer mortality.
+- Safe supplements, with no known major adverse side effects.
+- Regular dose
+  - 1500 mg/d glucosamine hydrochloride (GHCl) + 1200 mg/d chondroitin sulfate (CS)
+
+##Background
+
+
