@@ -1,6 +1,6 @@
 ---
-title: "Final Project"
-author: "wendyxwang"
+title: "Final Project: GLANCE Study"
+author: "Wendy Wang and Ning Li"
 date: "Tuesday, March 10, 2015"
 output:
   ioslides_presentation:
@@ -20,6 +20,10 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 ```
 
 ##Outline
+
+**Reference:**
+
+**Navarro S WE, Kantor ED, Zhang Y, Rho J, Song X, Milne GL, Lampe PD, Lampe JW. Randomized trial of glucosamine and chondroitin supplementation on inflammation and oxidative stress biomarkers and plasma proteomics profiles in healthy humans. PLoS One In press.**
 
 - Background
 - Study Design and Data Collection 
@@ -41,4 +45,18 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 ##Background
 
-test2
+**Mechanisms of G&C on cancer prevention**
+
+- Several lines of evidence from *in vitro* and preclinical studies support a possible role for G&C in reducing inflammation.
+- Potentially through inhibition of nuclear factor kappa B pathway.
+- No human intervention trials have been evaluated the effect of G&C on reducing inflammation or altering other pathways in healthy individuals
+
+##Study Design
+
+##Participants
+
+##Data collection
+
+##Proteomics Analysis
+
+
