@@ -53,8 +53,15 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 ##Study Design
 
+- Randomized cross-over placebo-controlled trial
+- Ranomized on the order of treatment or placebo period
+- 28 days of each intervention period with 28 days of wash-out period in-between
+
+
 ##Participants
 
+- 18 subjects: 9 males and 9 females
+- Healthy non-smokers, BMI between 28 and 31.
 ##Data collection
 
 ##Proteomics Analysis
