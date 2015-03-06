@@ -53,15 +53,17 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 ##Study Design
 
-- Randomized cross-over placebo-controlled trial
+- Randomized, double-blinded, placebo-controlled crossover trial
 - Ranomized on the order of treatment or placebo period
-- 28 days of each intervention period with 28 days of wash-out period in-between
-
+- Each intervention period lasted 28 days with a 28 day washout period in-between
 
 ##Participants
 
 - 18 subjects: 9 males and 9 females
-- Healthy non-smokers, BMI between 28 and 31.
+- Healthy, overweight(25<BMI<=32.5), non-smoking, aged 20-55 years individuals in the greater Seattle area.
+- Strict exclusion criteria (e.g. medical history, weight change, alcohol intake, supplemental use and vegetarian dietary)
+
+
 ##Data collection
 
 ##Proteomics Analysis
