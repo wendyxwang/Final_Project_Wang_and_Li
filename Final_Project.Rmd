@@ -61,11 +61,31 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 - 18 subjects: 9 males and 9 females
 - Healthy, overweight(25<BMI<=32.5), non-smoking, aged 20-55 years individuals in the greater Seattle area.
-- Strict exclusion criteria (e.g. medical history, weight change, alcohol intake, supplemental use and vegetarian dietary)
+- Strict exclusion criteria (e.g. medical history, medication use, large weight change, alcohol intake, supplemental use, vegetarian dietary and abnormal laboratory values)
 
 
 ##Data collection
 
+- Blood samples were collected after each 28-day intervention period in the morning after a minimum of a 12-hour overnight fast.
+- Blood was drawn into a tube containing EDTA for plasma. All samples were aliquoted and stored at -80°C.
+
 ##Proteomics Analysis
+
+- Plasma samples were evaluated on a customized antibody array populated with ~3,000 full-length antibodies, printed in triplicates.
+- Protein (200 µg) from a pool of albumin and IgG-depleted plasma were labeled with Cy5. Each sample was combined with reference sample labeled with Cy3.
+- Unbound proteins were removed by washing and the slides scanned for Cy3 and Cy5 fluorescence in an Axon Genepix 4000B scanner.
+- The Cy5/Cy3 ratio determined the relative concentration of protein compared to reference.
+- Most (>85%) antibodies on the array had coefficients of variation, for triplicates, of less than 10%. Antibodies with CV>10% were excluded for further analysis.
+
+##Array Analysis and Normalization
+
+##Statistical Analysis Plans
+
+**Plan 1. Replicate the reported results**
+
+##Statistical Analysis Plans
+
+**Plan 2. Independently develop statistical analysis**
+
 
 
