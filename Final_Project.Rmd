@@ -79,13 +79,30 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 ##Array Analysis and Normalization
 
+- The array image was scanned using a GenePix 4000B (Axon Instruments) scanner.
+- For each antibody, fold-change of the signal (red channel) was compared to the reference (green channel) after background correction, the ratio noted as M value.
+- Experimental variation was normalized using within-array print-tip loess and between-array quartile normalization.
+- Triplicate features were summarized using their median. M values were standardized such that the mean value and standard deviation of the placebo groups were set to zero and one, respectively.
+- After all processing, data were available for analysis on a total of 2938 antibodies.
+
+##Statistical Analysis
+
+**Overview of data**
+
+- We have 18 treatment and 18 placebo samples
+- Each has data on a 2938 antibodies
+- About 1100 of the antibodies are duplicates
+  - Would this be of concern? (Stay tuned!)
+
 ##Statistical Analysis Plans
 
 **Plan 1. Replicate the reported results**
 
+- 
+
 ##Statistical Analysis Plans
 
-**Plan 2. Independently develop statistical analysis**
+**Plan 2. Independently developed analysis**
 
 
 
