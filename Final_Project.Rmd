@@ -91,18 +91,38 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 - We have 18 treatment and 18 placebo samples
 - Each has data on a 2938 antibodies
+```{r}
+#R code to show the data descriptively and briefly
+
+```
 - About 1100 of the antibodies are duplicates
-  - Would this be of concern? (Stay tuned!)
+```{r}
+#Also #duplicates
+
+```
+
+  *Would this be of concern? (Stay tuned!)*
 
 ##Statistical Analysis Plans
 
 **Plan 1. Replicate the reported results**
 
-- 
+- Paired t-test using linear regression model, adjusted for batch effects and gender
+- GSEA analysis using Wilcoxon Test
 
 ##Statistical Analysis Plans
 
-**Plan 2. Independently developed analysis**
+**Plan 2. Alternative analysis plan**
+
+- Averaging across duplicated antibodies
+- Moderated T test using R Limma package
+- GSEA using GEGG and GO pathway databases and R Camera package
+- Heatmap plots of significant results
+
+##Plan 1. Replication
+
+
+##Plan 2. Alternative analysis
 
 
 
