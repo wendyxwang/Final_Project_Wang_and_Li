@@ -1,0 +1,9 @@
+---
+title: "Wendy's codes"
+author: "wendyxwang"
+date: "Saturday, March 07, 2015"
+output: html_document
+---
+
+This is a file documenting Wendy's codes.
+
