@@ -1,0 +1,169 @@
+---
+title: "Wendy's codes"
+author: "wendyxwang"
+date: "Saturday, March 07, 2015"
+output: html_document
+---
+
+This is a file documenting Wendy's codes.
+
+```{r}
+library(limma)
+
+load("Data/ma_afterNorm_organized_18pairs.Rdata")
+ls()
+#add is read-in from orginal dataset and output to organized data
+#m is the matching indicator for ma and info$Array.name
+ls(ma)
+#where ma is the dataset with expression level(M and A) and weights
+#M has been normalized based on placebo distribution
+#only full length of antibodies are kept in ma, ab.name and gene.name
+
+#delete genes with >50% missing data
+delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
+ma <- ma[!1:nrow(ma)%in%delete,]
+
+length(rownames(ma$genes))
+#2938
+```
+
+#(Ignore this chunk)Average the duplicates
+```{r}
+#get unique genes
+#unique <- unique(gene.name)
+#duplicate <- duplicated(gene.name)
+#duplicate.gene <- gene.name[duplicate]
+```
+
+Okay. If we do that after limma
+
+##moderate t test using limma
+```{r}
+table(info$Hybrid.day)
+info.temp <- info
+
+info.temp$Hybrid.day <- as.factor(info.temp$Hybrid.day)
+info.temp$case <- as.factor(info.temp$case)
+info.temp$box <- as.factor(info.temp$box)
+info.temp$position <- as.factor(info.temp$position)
+info.temp$batch <- as.factor(info.temp$batch)
+info.temp$gender <- as.factor(info.temp$gender)
+
+m <- ma$M
+
+#remove info.temp with id=80013 and QC
+info.temp <- info.temp[which(substr(info$id,1,2)!="QC"),]
+ma <- ma[,which(substr(info$id,1,2)!="QC")]
+table(info$case)
+
+# remove 80013 since he has cold at blood draw #
+select <- which(info.temp$id!="80013")
+ma <- ma[,select]
+info.temp <- info.temp[select,]
+
+#So we run everything in the orginal codes before paired t-test
+#And we use limma instead of pairted t test to fit the model
+mm <-model.matrix(~0+id+case, data=info.temp)
+mm <- mm[,-11]
+mm <- mm[, -(19:24)]
+fit <- lmFit(est.m, mm)
+ebay <- eBayes(fit)
+
+top <- topTable(ebay, coef="case1", number=Inf, sort.by="p")
+head(top)
+#now they looks more correct!
+```
+
+
+##GSEA
+```{r}
+library(GSEABase)
+library(edgeR)
+
+kegg <- getGmt("Data/c2.cp.kegg.v4.0.symbols.gmt")
+
+gene_ids <- geneIds(kegg)
+
+est_new <- est.m
+row <- rownames(est_new)
+row_new <- sapply(strsplit(as.character(row),"_"), function(x) x[[3]])
+rownames(est_new) <- row_new
+
+if (exists("ids2indices")) { 
+    sets_indices <- ids2indices(gene_ids, rownames(est_new))
+}
+if (exists("symbols2indices")) {
+    sets_indices <- symbols2indices(gene_ids, rownames(est_new))    
+}
+
+cont_matrix <- makeContrasts("case1", levels=mm)
+gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
+
+est_narm <- est_new
+est_narm[is.na(est_narm)] <- 0
+gsea_kegg <- camera(est_narm, sets_indices, design=mm, cont_matrix)
+#now it worked but we don't have anything significant!
+```
+
+```{r}
+#see how it goes with GO
+go <- getGmt("Data/c5.all.v4.0.symbols.gmt")
+
+gene_ids_go <- geneIds(go)
+
+if (exists("ids2indices")) { 
+    sets_indices_go <- ids2indices(gene_ids_go, rownames(est_new))
+}
+if (exists("symbols2indices")) {
+    sets_indices_go <- symbols2indices(gene_ids_go, rownames(est_new))    
+}
+
+cont_matrix <- makeContrasts("case1", levels=mm)
+gsea_go <- camera(est_narm, sets_indices_go, design=mm, cont_matrix)
+#also nothing significant!
+```
+
+##Other thoughts
+
+#Try block on person in lmFit
+```{r}
+mm_new <-model.matrix(~0+case, data=info.temp)
+colnames(mm_new)<-levels(info.temp$case)
+
+corfit<-duplicateCorrelation(est.m, mm_new, block=info.temp$id)
+corfit$consensus
+
+fit_new <- lmFit(est_new, mm_new, block=info.temp$id, correlation=corfit$consensus)
+ebay_new <- eBayes(fit_new)
+
+fit_new2 <- contrasts.fit(fit_new,cont_matrix)
+ebay_new2 <- eBayes(fit_new2)
+top_new <- topTable(ebay_new, coef="1", number=Inf, sort.by="p")
+head(top)
+
+
+#GSEA
+cm <- makeContrasts("1", levels=mm)
+gsea_kegg_new <- camera(est_narm, sets_indices, design=mm, cm)
+#nothing significant either
+
+gsea_go_new <- camera(est_narm, sets_indices_go, design=mm, cm)
+#nothing significant either
+```
+
+
+##Ignore the following codes
+```{r}
+a <- backgroundCorrect(RG, method="normexp", offset=50)
+b <- normalizeWithinArrays(RG, method="loess")
+c <- normalizeWithinArrays(a)
+plotDensities(c)
+d <- normalizeBetweenArrays(c, method="Aquantile")
+plotDensities(d)
+```
+
+
+
+
+
+
