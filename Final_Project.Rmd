@@ -120,16 +120,18 @@ length(rownames(ma$genes))
 
 **Plan 1. Replicate the reported results**
 
-- Paired t-test using linear regression model, adjusted for batch effects and gender
+- Using linear regression to adjust for batch effects
+- Paired t-test comparing treatment and placebo
 - GSEA analysis using Wilcoxon Test
 
 ##Statistical Analysis Plans
 
 **Plan 2. Alternative analysis plan**
 
-- Averaging across duplicated antibodies
+- (Same as plan 1) Using linear regression to adjust for batch effects
+- Clean duplicated antibodies: multiple duplicated antibodies for the same protein that did not have at least two significant results with the effect size going in the same direction were excluded
 - Moderated T test using R Limma package
-- GSEA using GEGG and GO pathway databases and R Camera package
+- GSEA using GEGG and GO pathway databases and CAMERA
 - Heatmap plots of significant results
 
 ##Plan 1. Replication
