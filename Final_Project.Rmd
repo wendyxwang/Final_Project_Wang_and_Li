@@ -90,7 +90,7 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 **Overview of data**
 
 - We have 18 treatment and 18 placebo samples
-- Each has data on a 2938 antibodies (3586??)
+- Each has data on a 2938 antibodies
 ```{r}
 #load packages
 library(limma)
@@ -102,7 +102,7 @@ ls()
 colnames(info)
 
 table(info$intervention)
-length(ab.name)
+length(rownames(ma$gene))
 #Results showed 3586 antibodies. Not sure what happened?
 ```
 - About 1100 of the antibodies are duplicates
