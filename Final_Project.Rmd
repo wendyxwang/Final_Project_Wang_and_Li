@@ -102,9 +102,12 @@ ls()
 colnames(info)
 
 table(info$intervention)
-length(rownames(ma$gene))
-#Results showed 3586 antibodies. Not sure what happened?
+
+delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
+ma <- ma[!1:nrow(ma)%in%delete,])
+length(rownames(ma$genes))
 ```
+
 - About 1100 of the antibodies are duplicates
 ```{r}
 #Also #duplicates
