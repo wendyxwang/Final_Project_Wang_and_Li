@@ -1,0 +1,287 @@
+---
+title: "Ning_codes"
+author: "Ning LI"
+date: "Monday, March 09, 2015"
+output: html_document
+---
+
+```{r}
+library(limma)
+
+load("E:\\UW\\winter2015\\BIOSTAT578\\project\\try\\ma_afterNorm_organized_18pairs.Rdata")
+ls()
+#add is read-in from orginal dataset and output to organized data
+#m is the matching indicator for ma and info$Array.name
+ls(ma)
+#where ma is the dataset with expression level(M and A) and weights
+#M has been normalized based on placebo distribution
+#only full length of antibodies are kept in ma, ab.name and gene.name
+str(gene.name)#3586
+length(unique(gene.name))#2259
+#delete genes with >50% missing data
+delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
+length(delete)#648
+ma <- ma[!1:nrow(ma)%in%delete,]
+dim(ma)#2938
+#we do the same thing for gene.name
+gene.name<-gene.name[!1:length(gene.name)%in%delete]
+length(rownames(ma$genes))#2938
+length(gene.name)#2938
+rownames(ma)<-gene.name
+#Up to now, we have cleared >50% missing data, and keep update the gene names. 
+```
+
+
+```{r,delete duplicate}
+#find unique gene
+unique.gene<-unique(gene.name)
+length(unique.gene)#1892
+summary.gene<-table(gene.name)
+#rownames of a store all the unique gene name
+#a value is count for specific gene
+MA<-list(M=matrix(0,nrow=length(unique.gene),ncol=36),A=matrix(0,nrow=length(unique.gene),ncol=36))
+for(i in 1:length(summary.gene)){
+  name<-rownames(summary.gene)[i];
+  count<-summary.gene[i];
+  if(count>1){
+  MA$M[i,]<-apply(ma$M[rownames(ma)==name,],2,mean,na.rm=T)
+  MA$A[i,]<-apply(ma$A[rownames(ma)==name,],2,mean,na.rm=T)
+  }
+  else{
+  MA$M[i,]<-ma$M[rownames(ma)==name,]
+  MA$A[i,]<-ma$A[rownames(ma)==name,]
+  }
+}
+dim(MA[["M"]])
+colnames(MA[["M"]])<-colnames(ma$M);
+colnames(MA[["A"]])<-colnames(ma$A);
+rownames(MA[["M"]])<-rownames(summary.gene);
+rownames(MA[["A"]])<-rownames(summary.gene);
+#great! we have already had 1892*36 genes!
+```
+
+
+Okay. If we do that after limma
+
+##moderate t test using limma
+```{r}
+table(info$Hybrid.day)
+info.temp <- info
+
+info.temp$Hybrid.day <- as.factor(info.temp$Hybrid.day)
+info.temp$case <- as.factor(info.temp$case)
+info.temp$box <- as.factor(info.temp$box)
+info.temp$position <- as.factor(info.temp$position)
+info.temp$batch <- as.factor(info.temp$batch)
+info.temp$gender <- as.factor(info.temp$gender)
+
+#m <- ma$M
+m<-MA$M
+a<-MA$A
+
+#remove info.temp with id=80013 and QC
+info.temp <- info.temp[which(substr(info$id,1,2)!="QC"),]
+#ma <- ma[,which(substr(info$id,1,2)!="QC")]
+m<- m[,which(substr(info$id,1,2)!="QC")]
+a<- a[,which(substr(info$id,1,2)!="QC")]
+table(info$case)
+
+# remove 80013 since he has cold at blood draw #
+select <- which(info.temp$id!="80013")
+m <- m[,select]
+a <- a[,select]
+info.temp <- info.temp[select,]
+```
+
+```{r,est.m and lm function}
+#require library
+library(qvalue)
+
+estim.casecont <- function(mylm,info.temp,m,a){
+  coefs <- summary(mylm)$coef[,1]
+  name.coefs <- names(coefs)
+  hybed.name <- name.coefs[1:length(name.coefs) %in% grep("Hybrid.day",name.coefs)]
+  hybed.name <- unlist(lapply(strsplit(hybed.name,"Hybrid.day"),function(x) x[2]))
+  k <- 1
+  X <- ifelse(as.character(info.temp$Hybrid.day)==hybed.name[k],1,0)
+  if(length(hybed.name)>1){
+    for(k in 2:length(hybed.name))  X <- cbind(X,ifelse(as.character(info.temp$Hybrid.day)==hybed.name[k],1,0))
+    table(X[,ncol(X)-1],info.temp$Hybrid.day)
+    table(X[,ncol(X)],info.temp$Hybrid.day)
+  }
+  box.name <- name.coefs[1:length(name.coefs) %in% grep("box",name.coefs)]
+  box.name <- unlist(lapply(strsplit(box.name,"box"),function(x) x[2]))
+  k <- 1
+  X <- cbind(X,ifelse(as.character(info.temp$box)==box.name[k],1,0))
+  for(k in 2:length(box.name))  X <- cbind(X,ifelse(as.character(info.temp$box)==box.name[k],1,0))
+  table(X[,ncol(X)-1],info.temp$box)
+  table(X[,ncol(X)],info.temp$box)
+  # position #
+  pos.name <- name.coefs[1:length(name.coefs) %in% grep("position",name.coefs)]
+  pos.name <- unlist(lapply(strsplit(pos.name,"position"),function(x) x[2]))
+  k <- 1
+  X <- cbind(X,ifelse(as.character(info.temp$position)==pos.name[k],1,0))
+  for(k in 2:length(pos.name))  X <- cbind(X,ifelse(as.character(info.temp$position)==pos.name[k],1,0))
+  table(X[,ncol(X)-1],info.temp$position)
+  table(X[,ncol(X)],info.temp$position)
+
+  # gender #
+  gen.name <- name.coefs[1:length(name.coefs) %in% grep("gender",name.coefs)]
+  gen.name <- unlist(lapply(strsplit(gen.name,"gender"),function(x) x[2]))
+  k <- 1
+  X <- cbind(X,ifelse(as.character(info.temp$gender)==gen.name[k],1,0))
+  table(X[,ncol(X)],info.temp$gender)
+  
+  est.m <- m - coefs[-c(1,2)]%*%t(X)
+  return(est.m)
+}
+
+
+lm.fun <- function(sub.ma,sub.info,gene.name){
+  sub.info$Hybrid.day <- as.factor(sub.info$Hybrid.day)
+  sub.info$case <- as.factor(sub.info$case)
+  sub.info$box <- as.factor(sub.info$box)
+  sub.info$position <- as.factor(sub.info$position)
+  sub.info$batch <- as.factor(sub.info$batch)
+  sub.info$gender <- as.factor(sub.info$gender)          
+  ## linear regression to M with a
+  coef <- pvalue <- NA
+  #est.m <- matrix(rep(NA,nrow(sub.ma)*ncol(sub.ma)),nrow=nrow(sub.ma))
+  est.m<-matrix(rep(NA,nrow(sub.ma$M)*ncol(sub.ma$M)),nrow=nrow(sub.ma$M))
+  i <- 1
+  for(i in 1:nrow(sub.ma$M)){
+    m.temp <- as.numeric(sub.ma$M[i,])
+    a.temp <- as.numeric(sub.ma$A[i,])
+
+    mylm <- lm(m.temp ~ case +Hybrid.day+box+position+gender,data=sub.info)
+    coef[i] <- mylm$coef["case1"]
+    pvalue[i] <- summary(mylm)$coef["case1",4]
+    est.m[i,] <- estim.casecont(mylm,sub.info,m.temp,a.temp)    
+  }
+  p.d <- data.frame(ind=1:length(pvalue),pvalue)
+  q.d <- data.frame(ind=p.d$ind[!is.na(p.d$p)],q=qvalue(na.omit(p.d$p),robust=T)$qvalues)
+  qvalue <- merge(p.d,q.d,by="ind",all.x=T,all.y=T)$q
+
+ # gene.name <- unlist(lapply(strsplit(as.character(sub.ma$genes$Name),"_"),function(x) x[3]))
+#  ab.name <- unlist(lapply(strsplit(as.character(sub.ma$genes$Name),"_"),function(x) x[4]))
+
+  result.all <- data.frame(gene.name=gene.name,coef=coef,pvalue=pvalue,qvalue=qvalue)
+  result.all <- result.all[order(result.all$pvalue),]
+#  return(result.all)
+  return(list(result=result.all,est=est.m))  
+}
+
+result<-lm.fun(MA,info.temp,unique.gene)
+ls(result)
+est.m<-result[["est"]]
+
+```
+
+Then, limma analysis
+```{r, limma}
+#So we run everything in the orginal codes before paired t-test
+#And we use limma instead of pairted t test to fit the model
+
+mm <-model.matrix(~0+id+case, data=info.temp)
+mm <- mm[,-11]
+mm <- mm[, -(19:24)]
+fit <- lmFit(est.m, mm)
+#Warning message:
+#Partial NA coefficients for 464 probe(s) 
+ebay <- eBayes(fit)
+
+top <- topTable(ebay, coef="case1", number=Inf, sort.by="p")
+head(top)
+mean(top$adj.P.Val<0.01)# 0.5628964
+###why this is so high?
+###do we need to add manifold
+```
+
+
+##GSEA
+```{r}
+library(GSEABase)
+library(limma)
+
+kegg <- getGmt("Data/c2.cp.kegg.v4.0.symbols.gmt")
+
+gene_ids <- geneIds(kegg)
+
+est_new <- est.m
+row <- rownames(est_new)
+row_new <- sapply(strsplit(as.character(row),"_"), function(x) x[[3]])
+rownames(est_new) <- row_new
+
+if (exists("ids2indices")) { 
+    sets_indices <- ids2indices(gene_ids, rownames(est_new))
+}
+if (exists("symbols2indices")) {
+    sets_indices <- symbols2indices(gene_ids, rownames(est_new))    
+}
+
+cont_matrix <- makeContrasts("case1", levels=mm)
+gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
+
+est_narm <- est_new
+est_narm[is.na(est_narm)] <- 0
+gsea_kegg <- camera(est_narm, sets_indices, design=mm, cont_matrix)
+#now it worked but we don't have anything significant!
+```
+
+```{r}
+#see how it goes with GO
+go <- getGmt("Data/c5.all.v4.0.symbols.gmt")
+
+gene_ids_go <- geneIds(go)
+
+if (exists("ids2indices")) { 
+    sets_indices_go <- ids2indices(gene_ids_go, rownames(est_new))
+}
+if (exists("symbols2indices")) {
+    sets_indices_go <- symbols2indices(gene_ids_go, rownames(est_new))    
+}
+
+cont_matrix <- makeContrasts("case1", levels=mm)
+gsea_go <- camera(est_narm, sets_indices_go, design=mm, cont_matrix)
+#also nothing significant!
+```
+
+##Other thoughts
+
+#Try block on person in lmFit
+```{r}
+mm_new <-model.matrix(~0+case, data=info.temp)
+colnames(mm_new)<-levels(info.temp$case)
+
+corfit<-duplicateCorrelation(est.m, mm_new, block=info.temp$id)
+corfit$consensus
+
+fit_new <- lmFit(est_new, mm_new, block=info.temp$id, correlation=corfit$consensus)
+ebay_new <- eBayes(fit_new)
+
+fit_new2 <- contrasts.fit(fit_new,cont_matrix)
+ebay_new2 <- eBayes(fit_new2)
+top_new <- topTable(ebay_new, coef="1", number=Inf, sort.by="p")
+head(top)
+
+
+#GSEA
+cm <- makeContrasts("1", levels=mm)
+gsea_kegg_new <- camera(est_narm, sets_indices, design=mm, cm)
+#nothing significant either
+
+gsea_go_new <- camera(est_narm, sets_indices_go, design=mm, cm)
+#nothing significant either
+```
+
+
+##Ignore the following codes
+```{r}
+a <- backgroundCorrect(RG, method="normexp", offset=50)
+b <- normalizeWithinArrays(RG, method="loess")
+c <- normalizeWithinArrays(a)
+plotDensities(c)
+d <- normalizeBetweenArrays(c, method="Aquantile")
+plotDensities(d)
+```
+

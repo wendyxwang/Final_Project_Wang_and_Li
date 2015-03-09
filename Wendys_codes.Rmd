@@ -63,6 +63,7 @@ info.temp <- info.temp[select,]
 
 #So we run everything in the orginal codes before paired t-test
 #And we use limma instead of pairted t test to fit the model
+#so here, are you using linear regression to fit reponse, so that you got est.m?
 mm <-model.matrix(~0+id+case, data=info.temp)
 mm <- mm[,-11]
 mm <- mm[, -(19:24)]
