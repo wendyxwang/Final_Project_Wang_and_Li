@@ -23,7 +23,7 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 **Reference:**
 
-**Navarro S WE, Kantor ED, Zhang Y, Rho J, Song X, Milne GL, Lampe PD, Lampe JW. Randomized trial of glucosamine and chondroitin supplementation on inflammation and oxidative stress biomarkers and plasma proteomics profiles in healthy humans. PLoS One In press.**
+**Navarro S, White E, Kantor ED, Zhang Y, Rho J, Song X, Milne GL, Lampe PD, Lampe JW. Randomized trial of glucosamine and chondroitin supplementation on inflammation and oxidative stress biomarkers and plasma proteomics profiles in healthy humans. PLoS One. 2015; 10(2):e0117534**
 
 - Background
 - Study Design and Data Collection 
@@ -134,13 +134,14 @@ table(info$intervention)
 - (Same as plan 1) Using linear regression to adjust for batch effects
 - Moderated T test using R Limma package
 - GSEA using GEGG and GO pathway databases and CAMERA
-- Heatmap plots of significant results
 
 ## Statistical Analysis Results -Plan 1
 
 - Using linear regression to adjust for batch effects
 *Set up the functions*
-```{r,function definition}
+
+```{r,echo=FALSE,function definition}
+
 table(info$Hybrid.day)
 sub.ma <- ma
 sub.info <- info
@@ -183,7 +184,9 @@ estim.casecont <- function(mylm,info.temp,m,a){
   est.m <- m - coefs[-c(1,2)]%*%t(X)
   return(est.m)
 }
+```
 
+```{r}
 lm.fun <- function(sub.ma,sub.info){
   sub.info$Hybrid.day <- as.factor(sub.info$Hybrid.day)
   sub.info$case <- as.factor(sub.info$case)
@@ -218,7 +221,10 @@ lm.fun <- function(sub.ma,sub.info){
 }
 ```
 
-*Different expression based on batch effects
+
+## Statistical Analysis Results -Plan 1
+
+- Using linear regression to adjust for batch effects
 
 *Remove the batch effects based on lm.fun*
 ```{r, batch effects}
@@ -242,7 +248,10 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 
 *Q value
 - Paired t-test comparing treatment and placebo
+
+*Paired t-test*
 ```{r,paired t testing}
+
 table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
 info[1,]
@@ -261,7 +270,14 @@ effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(
 qvalue <- qvalue(p.t,robust=T)$qvalues
 ```
 
+
+## Statistical Analysis Results -Plan 1
+
+- Paired t-test comparing treatment and placebo
+*plots*
+
 ```{r,Qvalue plot}
+
 p.cut <- 0.01
 q.cut <- 0.001
 
@@ -272,12 +288,13 @@ abline(h=p.cut,col=6,lwd=2)
 hist(p.t,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p value paired T",main="",col="lightpink")
 abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(p.t<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(p.t<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
+```
 
+```{r}
 par(mfrow=c(1,1),font=2)
 hist(qvalue,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(qvalue<q.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(qvalue<q.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
-
 
 out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue)
 out <- out[order(out$p.t),]
@@ -321,8 +338,15 @@ length(unique(result$genes))
 length(result$genes)
 ```
 
+
 -GSEA analysis using GO pathways
+
+=======
+## Statistical Analysis Results -Plan 1
+
+- GSEA analysis using GO pathways
 ```{r, GSEA GO1}
+
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
 
@@ -433,6 +457,8 @@ gene.set <- data.frame(MasterGroup=seq(ncol(A)),GS.Name=colnames(A),GS.descrip=g
 gene.set <- gene.set[order(gene.set$wilc.p),]
 head(gene.set)
 ```
+
+## Statistical Analysis Results -Plan 1
 
 -Repeat GSEA analysis using KEGG pathways
 ```{r,GESA KEGG1}
@@ -586,7 +612,7 @@ rownames(MA[["A"]])<-rownames(summary.gene);
 ## Statistical Analysis Results -Plan 2
 
 - (Same as plan 1) Using linear regression to adjust for batch effects
-```{r}
+```{r, echo=FALSE}
 table(info$Hybrid.day)
 info.temp <- info
 
@@ -615,7 +641,7 @@ a <- a[,select]
 info.temp <- info.temp[select,]
 ```
 
-```{r,est.m and lm function}
+```{r,echo=FALSE, est.m and lm function}
 #require library
 library(qvalue)
 
@@ -717,16 +743,23 @@ head(top)
 mean(top$adj.P.Val<0.01)
 ```
 
-```{r}
+## Statistical Analysis Results -Plan 2
+
+- Moderated T test using R Limma package
+*Plots*
+```{r, echo=FALSE}
 p.cut <- 0.01
-par(mfrow=c(2,2),font=2)
+
+par(mfrow=c(1,2),font=2)
 plot(top$logFC,top$adj.P.Val,pch=19,col="blue",xlab="Effect Size",ylab="p value paired T",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut&top$logFC>0,na.rm=T)," +\n",sum(top$adj.P.Val<p.cut&top$logFC<0,na.rm=T)," - ",sep=""))
 abline(h=p.cut,col=6,lwd=2)
+
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p value paired T",main="",col="lightpink")
 abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 
+par(mfrow=c(1,1),font=2)
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
@@ -735,7 +768,7 @@ legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," q<",q.
 
 ## Statistical Analysis Results -Plan 2
 
-- GSEA using GEGG and GO pathway databases and CAMERA
+- GSEA using KEGG pathway database and CAMERA
 ```{r}
 library(GSEABase)
 
@@ -757,17 +790,21 @@ if (exists("symbols2indices")) {
 
 cont_matrix <- makeContrasts("case1", levels=mm)
 gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
+#It's not working due to the NA's
 
+#So we change all the NA's to zero
 est_narm <- est_new
 est_narm[is.na(est_narm)] <- 0
 gsea_kegg <- camera(est_narm, sets_indices, design=mm, cont_matrix)
 
 head(gsea_kegg)[1:10]
-#now it worked but we don't have anything significant!
+#now it worked but we don't have anything significant.
 ```
 
+## Statistical Analysis Results -Plan 2
+
+- GSEA using GO pathway database and CAMERA
 ```{r}
-#see how it goes with GO
 go <- getGmt("Data/c5.all.v4.0.symbols.gmt")
 
 gene_ids_go <- geneIds(go)
@@ -787,4 +824,15 @@ head(gsea_go)[1:10]
 ```
 
 
-- Heatmap plots of significant results
+## Conclusion and Discussion
+
+- Results for individual proteins are similar
+- Results for pathway analysis are very different.
+
+**Why?**
+- We set all missing values to 0
+- Different methods: paired t-test vs. LIMMA; Wilcoxon test vs. CAMERA
+
+##Questions?
+
+
