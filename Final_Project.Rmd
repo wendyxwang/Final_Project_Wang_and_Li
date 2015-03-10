@@ -195,7 +195,7 @@ round(Table,digits=3)
 
 - Paired t-test comparing treatment and placebo
 
-- The therethold value for q value and bonferroni test  is 0.001.  
+- The threshold value for q value and bonferroni test  is 0.001.  
    
 
 
@@ -304,17 +304,17 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 
 ```{r paired t testing,echo=FALSE,cache=TRUE}
 
-table(colnames(est.m)==info$Array.name)
+#table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
-info[1,]
-table(table(info$id))
+#info[1,]
+#table(table(info$id))
 case.m <- est.m[,info$case==1]
 ctrl.m <- est.m[,info$case==0]
 
 case.info <- info[info$case==1,]
 ctrl.info <- info[info$case==0,]
 
-table(case.info$id==ctrl.info$id)
+#table(case.info$id==ctrl.info$id)
 
 p.t <- sapply(1:nrow(case.m),function(x) t.test(case.m[x,],ctrl.m[x,],paired=T)$p.value)
 
