@@ -140,7 +140,7 @@ table(info$intervention)
 
 - Using linear regression to adjust for batch effects
 *Set up the functions*
-```{r}
+```{r,echo=FALSE}
 table(info$Hybrid.day)
 sub.ma <- ma
 sub.info <- info
@@ -183,7 +183,9 @@ estim.casecont <- function(mylm,info.temp,m,a){
   est.m <- m - coefs[-c(1,2)]%*%t(X)
   return(est.m)
 }
+```
 
+```{r}
 lm.fun <- function(sub.ma,sub.info){
   sub.info$Hybrid.day <- as.factor(sub.info$Hybrid.day)
   sub.info$case <- as.factor(sub.info$case)
@@ -274,8 +276,6 @@ par(mfrow=c(1,1),font=2)
 hist(qvalue,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(qvalue<q.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(qvalue<q.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
-
-gene <- gene.name[gene.name %in% ]
 
 out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue)
 out <- out[order(out$p.t),]
