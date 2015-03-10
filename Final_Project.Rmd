@@ -598,7 +598,7 @@ rownames(MA[["A"]])<-rownames(summary.gene);
 ## Statistical Analysis Results -Plan 2
 
 - (Same as plan 1) Using linear regression to adjust for batch effects
-```{r}
+```{r, echo=FALSE}
 table(info$Hybrid.day)
 info.temp <- info
 
@@ -627,7 +627,7 @@ a <- a[,select]
 info.temp <- info.temp[select,]
 ```
 
-```{r,est.m and lm function}
+```{r,echo=FALSE, est.m and lm function}
 #require library
 library(qvalue)
 
@@ -729,16 +729,23 @@ head(top)
 mean(top$adj.P.Val<0.01)
 ```
 
-```{r}
+## Statistical Analysis Results -Plan 2
+
+- Moderated T test using R Limma package
+*Plots*
+```{r, echo=FALSE}
 p.cut <- 0.01
-par(mfrow=c(2,2),font=2)
+
+par(mfrow=c(1,2),font=2)
 plot(top$logFC,top$adj.P.Val,pch=19,col="blue",xlab="Effect Size",ylab="p value paired T",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut&top$logFC>0,na.rm=T)," +\n",sum(top$adj.P.Val<p.cut&top$logFC<0,na.rm=T)," - ",sep=""))
 abline(h=p.cut,col=6,lwd=2)
+
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p value paired T",main="",col="lightpink")
 abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 
+par(mfrow=c(1,1),font=2)
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
@@ -747,7 +754,7 @@ legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," q<",q.
 
 ## Statistical Analysis Results -Plan 2
 
-- GSEA using GEGG and GO pathway databases and CAMERA
+- GSEA using KEGG pathway database and CAMERA
 ```{r}
 library(GSEABase)
 
@@ -769,17 +776,21 @@ if (exists("symbols2indices")) {
 
 cont_matrix <- makeContrasts("case1", levels=mm)
 gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
+#It's not working due to the NA's
 
+#So we change all the NA's to zero
 est_narm <- est_new
 est_narm[is.na(est_narm)] <- 0
 gsea_kegg <- camera(est_narm, sets_indices, design=mm, cont_matrix)
 
 head(gsea_kegg)[1:10]
-#now it worked but we don't have anything significant!
+#now it worked but we don't have anything significant.
 ```
 
+## Statistical Analysis Results -Plan 2
+
+- GSEA using GO pathway database and CAMERA
 ```{r}
-#see how it goes with GO
 go <- getGmt("Data/c5.all.v4.0.symbols.gmt")
 
 gene_ids_go <- geneIds(go)
@@ -807,3 +818,7 @@ head(gsea_go)[1:10]
 **Why?**
 - We set all missing values to 0
 - Different methods: paired t-test vs. LIMMA; Wilcoxon test vs. CAMERA
+
+##Questions?
+
+
