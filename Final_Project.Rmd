@@ -1,8 +1,9 @@
 ---
-title: "Final Project: GLANCE Study"
+title: 'Final Project: GLANCE Study'
 author: "Wendy Wang and Ning Li"
 date: "Tuesday, March 10, 2015"
 output:
+  beamer_presentation: default
   ioslides_presentation:
     fig_caption: yes
     fig_retina: 1
@@ -13,17 +14,17 @@ output:
 ## Setting up some options
 
 Let's first turn on the cache for increased performance and improved styling
-```{r, cache=FALSE}
+```{r,cache=FALSE}
 # Set some global knitr options
 library("knitr")
-opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TRUE, messages=FALSE)
+opts_chunk$set(tidy=TRUE, size='Huge',tidy.opts=list(blank=FALSE, width.cutoff=80), cache=TRUE, messages=FALSE)
 ```
 
-##Outline
-
-**Reference:**
+##Reference
 
 **Navarro S, White E, Kantor ED, Zhang Y, Rho J, Song X, Milne GL, Lampe PD, Lampe JW. Randomized trial of glucosamine and chondroitin supplementation on inflammation and oxidative stress biomarkers and plasma proteomics profiles in healthy humans. PLoS One. 2015; 10(2):e0117534**
+
+##Outline
 
 - Background
 - Study Design and Data Collection 
@@ -85,41 +86,40 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 - Triplicate features were summarized using their median. M values were standardized such that the mean value and standard deviation of the placebo groups were set to zero and one, respectively.
 - After all processing, data were available for analysis on a total of 2938 antibodies.
 
-##Statistical Analysis
-
-**Overview of data**
-
-```{r}
+  
+```{r readingdata,echo=FALSE,cache=TRUE,message=FALSE}
 #load packages
 library(limma)
 library(qvalue)
 
 #load our data
 load("Data/ma_afterNorm_organized_18pairs.Rdata")
-ls()
-colnames(info)
+#ls()
+#colnames(info)
 
 
-str(gene.name)
-length(unique(gene.name))
+#str(gene.name)
+#length(unique(gene.name))
 #delete any genes with more than 50% missing values
 delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
 ma <- ma[!1:nrow(ma)%in%delete,]
-dim(ma)
+#dim(ma)
 #we do the same thing for gene.name
 gene.name<-gene.name[!1:length(gene.name)%in%delete]
-length(rownames(ma$genes))#2938
-length(gene.name)#2938
+#length(rownames(ma$genes))#2938
+#length(gene.name)#2938
 rownames(ma)<-gene.name
 
-table(info$intervention)
+#table(info$intervention)
 ```
-
 ##Statistical Analysis
-**Overview of data**
-- We have 18 treatment and 18 placebo samples
-- Each has data on a 2938 antibodies
-- About 1100 of the antibodies are duplicates
+
+**Overview of data**  
+
+- We have 18 treatment and 18 placebo samples  
+- We delete any genes with more than 50% missing values      
+- Each has data on a 2938 antibodies  
+- About 1100 of the antibodies are duplicates  
 
   *Would this be of concern? (Stay tuned!)*
 
@@ -140,12 +140,68 @@ table(info$intervention)
 - Moderated T test using R Limma package
 - GSEA using GEGG and GO pathway databases and CAMERA
 
+
+## Statistical Analysis Results -Plan 1
+- Batch effects check(graph)
+```{r batch,echo=FALSE,fig.width=15,fig.height=8,cache=TRUE}
+batch.m<-ma$M
+
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+plotdata<-melt(batch.m)
+plotdata$gender<-rep(info$gender,each=dim(batch.m)[1])
+p0 <- ggplot(plotdata[plotdata$gender==0,], aes(y=Var2,x=Var1,fill=value)) + geom_tile() + scale_fill_gradient(low="white", high="darkblue")+ xlab("gene") + ylab("obs")+theme(axis.ticks = element_blank(), axis.text.y = element_blank())+ggtitle("genes expression for male")
+p1 <- ggplot(plotdata[plotdata$gender==1,], aes(y=Var2,x=Var1)) + geom_tile(aes(fill=value)) + scale_fill_gradient(low="white", high="darkblue") + xlab("obs") + ylab("gene")+theme(axis.ticks = element_blank(), axis.text.y = element_blank())+ggtitle("genes expression for female")
+grid.arrange( p0, p1, ncol=2)
+
+P.Hd<-P.b<-P.p<-P.g<-NULL;
+for(i in 1:dim(batch.m)[1]){
+  fit1<-lm(batch.m[i,]~as.factor(info$Hybrid.day))
+  fit2<-lm(batch.m[i,]~as.factor(info$box))
+  fit3<-lm(batch.m[i,]~as.factor(info$position))
+  fit4<-lm(batch.m[i,]~as.factor(info$gender))
+  P.Hd<-c(P.Hd,anova(fit1)$"Pr(>F)"[1])
+  P.b<-c(P.b,anova(fit2)$"Pr(>F)"[1])
+  P.p<-c(P.p,anova(fit3)$"Pr(>F)"[1])
+  P.g<-c(P.Hd,anova(fit4)$"Pr(>F)"[1])
+}
+Table<-matrix(0,ncol=4,nrow=2)
+Table[1,1]<-mean(P.Hd<.05)#0.3158611
+Table[1,2]<-mean(P.b<.05)#0.5245065
+Table[1,3]<-mean(P.p<.05)#0.01565691
+Table[1,4]<-mean(P.g<.05)#0.3157537
+Table[2,1]<-mean(p.adjust(P.Hd, method ="bonferroni")<0.05)# 0.02791014
+Table[2,2]<-mean(p.adjust(P.b, method ="bonferroni")<0.05)#0.01599728
+Table[2,3]<-mean(p.adjust(P.p, method ="bonferroni")<0.05)#0
+Table[2,4]<-mean(p.adjust(P.g, method ="bonferroni")<0.05)# 0.02790065
+rownames(Table)<-c("prop(p-value<.05)","prop(bonferroni<.05)")
+colnames(Table)<-c("Hybrid.day","box","position","gender")
+```
+
+
+## Statistical Analysis Results -Plan 1
+- Batch effects check(multiple tests)
+```{r,message=FALSE,cache=TRUE}
+round(Table,digits=3)
+```
+
+
+
 ## Statistical Analysis Results -Plan 1
 
 - Using linear regression to adjust for batch effects
-*Set up the functions*
-```{r,echo=FALSE}
-table(info$Hybrid.day)
+   *m~case+Hybrid.day+box+position+gender*     
+
+- Paired t-test comparing treatment and placebo
+
+- The therethold value for q value and bonferroni test  is 0.001.  
+   
+
+
+```{r functiondefinition,echo=FALSE,cache=TRUE}
+
+#table(info$Hybrid.day)
 sub.ma <- ma
 sub.info <- info
 info.temp <- sub.info
@@ -189,7 +245,7 @@ estim.casecont <- function(mylm,info.temp,m,a){
 }
 ```
 
-```{r}
+```{r,echo=FALSE,cache=TRUE}
 lm.fun <- function(sub.ma,sub.info){
   sub.info$Hybrid.day <- as.factor(sub.info$Hybrid.day)
   sub.info$case <- as.factor(sub.info$case)
@@ -222,20 +278,21 @@ lm.fun <- function(sub.ma,sub.info){
 #  return(result.all)
   return(list(result=result.all,est=est.m))  
 }
+
 ```
 
-## Statistical Analysis Results -Plan 1
 
-- Using linear regression to adjust for batch effects
-*Remove the batch effects based on lm.fun*
-```{r}
+```{r, fig.height=8,fig.width=15,cache=TRUE,echo=FALSE}
+
 result <- lm.fun(ma,info)
 result.all <- result$result
 est.m <- result$est
 rownames(est.m) <- ma$genes$Name
 colnames(est.m) <- colnames(ma)
 
+```
 
+```{r,eval=FALSE,echo=FALSE}
 par(mfrow=c(1,2),font=2)
 plot(result.all$coef,result.all$pvalue,pch=19,col="blue",xlab="coef",ylab="p",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
 legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05&result.all$coef>0,na.rm=T)," +\n",sum(result.all$pvalue<0.05&result.all$coef<0,na.rm=T)," - ",sep=""))
@@ -245,11 +302,8 @@ abline(v=0.05,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," signft among ",nrow(ma)," abs (", round(sum(result.all$pvalue<0.05,na.rm=T)/nrow(ma)*100,2),"%)",sep=""))
 ```
 
-## Statistical Analysis Results -Plan 1
+```{r paired t testing,echo=FALSE,cache=TRUE}
 
-- Paired t-test comparing treatment and placebo
-*Paired t-test*
-```{r}
 table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
 info[1,]
@@ -266,17 +320,25 @@ p.t <- sapply(1:nrow(case.m),function(x) t.test(case.m[x,],ctrl.m[x,],paired=T)$
 
 effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(ctrl.m[x,],na.rm=T))/sd(ctrl.m[x,],na.rm=T))
 qvalue <- qvalue(p.t,robust=T)$qvalues
+bonfer<-p.adjust(p.t, method = "bonferroni")
 ```
 
 ## Statistical Analysis Results -Plan 1
 
-- Paired t-test comparing treatment and placebo
-*plots*
-```{r}
+```{r Qvalueplot,echo=FALSE,cache=TRUE,fig.height=15,fig.width=15,fig.align='center'}
+
 p.cut <- 0.01
 q.cut <- 0.001
 
-par(mfrow=c(1,2),font=2)
+par(mfrow=c(2,2),font=6)
+plot(result.all$coef,result.all$pvalue,pch=19,col="blue",xlab="coef",ylab="p",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
+legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05&result.all$coef>0,na.rm=T)," +\n",sum(result.all$pvalue<0.05&result.all$coef<0,na.rm=T)," - ",sep=""))
+abline(h=0.05,col=6,lwd=2)
+hist(result.all$pvalue,breaks=20,ylim=c(0,210),ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
+abline(v=0.05,col=6,lwd=2)
+legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," signft among ",nrow(ma)," abs (", round(sum(result.all$pvalue<0.05,na.rm=T)/nrow(ma)*100,2),"%)",sep=""))
+
+
 plot(effect.size,p.t,pch=19,col="blue",xlab="Effect Size",ylab="p value paired T",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
 legend("topright",bty='n',legend=paste(sum(p.t<p.cut&effect.size>0,na.rm=T)," +\n",sum(p.t<p.cut&effect.size<0,na.rm=T)," - ",sep=""))
 abline(h=p.cut,col=6,lwd=2)
@@ -285,27 +347,49 @@ abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(p.t<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(p.t<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 ```
 
-```{r}
-par(mfrow=c(1,1),font=2)
+
+
+
+```{r,cache=TRUE,echo=FALSE}
+par(mfrow=c(2,1),font=2)
 hist(qvalue,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(qvalue<q.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(qvalue<q.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 
-out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue)
+hist(bonfer,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
+abline(v=q.cut,col=6,lwd=2)
+legend("topright",bty='n',legend=paste(sum(bonfer<q.cut,na.rm=T)," p.bonfer<",q.cut," among ",nrow(case.m)," abs (", round(mean(bonfer<q.cut,na.rm=T)*100,2),"%)",sep=""))
+```
+
+## Statistical Analysis Results -Plan 1
+
+
+```{r,echo=FALSE}
+out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue,bonfer)
 out <- out[order(out$p.t),]
+```
+
+```{r,cache=TRUE}
 head(out)
 ```
 
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using Wilcoxon Test
-```{r}
+- a Wilcoxon test to test for diserences in the distribution of p values between SNPs within the gene set under test and a control set of SNPs. 
+- The Wilcoxon signed-rank test is a non-parametric statistical hypothesis test used when comparing two related samples, matched samples, or repeated measurements on a single sample to assess whether their population mean ranks differ
+
+## Statistical Analysis Results -Plan 1
+
+```{r,message=FALSE,echo=FALSE,cache=TRUE,fig.height=4,fig.width=5,fig.align='center'}
+
 out$genes <- sapply(strsplit(as.character(out$Name),"_"), function(x) x[[3]])
 result.save <- result <- out
 
-length(unique(result$genes))
+#length(unique(result$genes))
 result$sign.p <- ifelse(result$effect.size<0,-1,1)*(1-result$p.t)
-hist(result$sign.p,breaks=20)
+p<-ggplot(data=result,aes(x=sign.p))+geom_histogram(colour = "darkgreen", fill = "light blue")
+p
 
 # Rearrange gene seperate by coma #
 arrange <- function(data,symbols){
@@ -322,26 +406,27 @@ data <- rbind(data.na,data)
 data
 }
 symbols <- "/"
-dim(result)
+#dim(result)
 result <- arrange(result,symbols)
-grep(symbols,result$genes)
+#grep(symbols,result$genes)
 result <- result[!is.na(result$genes) & result$genes!="",]
-dim(result)
+#dim(result)
 
 gene.labels <- result$genes
-length(unique(result$genes))
-length(result$genes)
+#length(unique(result$genes))
+#length(result$genes)
 ```
 
 ## Statistical Analysis Results -Plan 1
 
-- GSEA analysis using GO pathways
-```{r}
+- GSEA analysis using GO pathways 
+
+```{r GSEA GO1,cache=TRUE,message=FALSE,echo=FALSE}
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
 
 db <- readLines(gs.db)
-length(db)
+#length(db)
 
 max.Ng <- length(db)
 db.size.G <- vector(length = max.Ng, mode = "numeric") 
@@ -411,7 +496,7 @@ colnames(A) <- gs.names
 
 A.abnames <- as.character(result$Name[which(result$genes%in%names(X))])
 #cbind(A.abnames[1:10],rownames(A)[1:10])
-table(table(A.abnames))
+#table(table(A.abnames))
 
 # ------------------ Filtering --------------- #
 q <- quantile(apply(A,2,function(x) sum(x)),0.25) # at least 3 gene samples in each gene set #
@@ -423,7 +508,7 @@ GS <- GS[select,]
 num.geneset <- num.geneset[select]
 # ------------------ Wilcox Test --------------- #
 A <- as.data.frame(A)
-levels(factor(A[,1]))
+#levels(factor(A[,1]))
 
 pvalue <- sapply(1:ncol(A),function(x) wilcox.test(X~factor(A[,x]))$p.value)
 
@@ -445,20 +530,30 @@ sum(result.save$p.t[which(result.save$Name%in%unique(A.abnames[x==1]))]<0.01,na.
 
 gene.set <- data.frame(MasterGroup=seq(ncol(A)),GS.Name=colnames(A),GS.descrip=gs.desc,GS.num.gene=num.geneset,num.gene.in=num.gene,num.abprobe.in=num.ab,sig.pairt,sig.positive,sig.negative,wilc.p=pvalue,qvalue=qvalue,gene.names=name)
 gene.set <- gene.set[order(gene.set$wilc.p),]
-head(gene.set)
+
 ```
 
 ## Statistical Analysis Results -Plan 1
 
--Repeat GSEA analysis using KEGG pathways
+- GSEA analysis using GO pathways 
+
 ```{r}
+head(gene.set)
+```
+
+## Statistical Analysis Results -Plan 1 
+
+- Repeat GSEA analysis using KEGG pathways
+
+```{r GESA KEGG1,cache=TRUE,echo=FALSE}
+
 # KEGG pathway on 12-16-2013 #
 gs.db <- "Data/c2.cp.kegg.v4.0.symbols.gmt"
 ```
 
-```{r, echo=FALSE,message=FALSE}
+```{r, echo=FALSE,message=FALSE,cache=TRUE,echo=FALSE}
 db <- readLines(gs.db)
-length(db)
+#length(db)
 
 max.Ng <- length(db)
 db.size.G <- vector(length = max.Ng, mode = "numeric") 
@@ -528,7 +623,7 @@ colnames(A) <- gs.names
 
 A.abnames <- as.character(result$Name[which(result$genes%in%names(X))])
 #cbind(A.abnames[1:10],rownames(A)[1:10])
-table(table(A.abnames))
+#table(table(A.abnames))
 
 # ------------------ Filtering --------------- #
 q <- quantile(apply(A,2,function(x) sum(x)),0.25) # at least 3 gene samples in each gene set #
@@ -540,7 +635,7 @@ GS <- GS[select,]
 num.geneset <- num.geneset[select]
 # ------------------ Wilcox Test --------------- #
 A <- as.data.frame(A)
-levels(factor(A[,1]))
+#levels(factor(A[,1]))
 
 pvalue <- sapply(1:ncol(A),function(x) wilcox.test(X~factor(A[,x]))$p.value)
 
@@ -558,23 +653,53 @@ sig.negative <- apply(A,2,function(x) sum(result.save$effect.size[which(result.s
 x <- A[,1]
 sig.positive[1]
 sig.negative[1]
-```
 
-```{r}
 sum(result.save$p.t[which(result.save$Name%in%unique(A.abnames[x==1]))]<0.01,na.rm=T)
 
 gene.set <- data.frame(MasterGroup=seq(ncol(A)),GS.Name=colnames(A),GS.descrip=gs.desc,GS.num.gene=num.geneset,num.gene.in=num.gene,num.abprobe.in=num.ab,sig.pairt,sig.positive,sig.negative,wilc.p=pvalue,qvalue=qvalue,gene.names=name)
 gene.set <- gene.set[order(gene.set$wilc.p),]
+```
+
+## Statistical Analysis Results -Plan 1 
+
+- Repeat GSEA analysis using KEGG pathways
+
+```{r}
 head(gene.set)
 ```
 
 ## Statistical Analysis Results -Plan 2
 
 - Clean duplicated antibodies
-```{r,delete duplicate}
+
+- we have 1892 genes and 36 samples
+```{r delete duplicate,cache=TRUE,echo=FALSE,message=FALSE}
+rm(list=ls())
+library(limma)
+
+load("E:\\UW\\winter2015\\BIOSTAT578\\project\\try\\ma_afterNorm_organized_18pairs.Rdata")
+#ls()
+#add is read-in from orginal dataset and output to organized data
+#m is the matching indicator for ma and info$Array.name
+#ls(ma)
+#where ma is the dataset with expression level(M and A) and weights
+#M has been normalized based on placebo distribution
+#only full length of antibodies are kept in ma, ab.name and gene.name
+#str(gene.name)#3586
+#length(unique(gene.name))#2259
+#delete genes with >50% missing data
+delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
+#length(delete)#648
+ma <- ma[!1:nrow(ma)%in%delete,]
+#dim(ma)#2938
+#we do the same thing for gene.name
+gene.name<-gene.name[!1:length(gene.name)%in%delete]
+#length(rownames(ma$genes))#2938
+#length(gene.name)#2938
+rownames(ma)<-gene.name
 #find unique gene
 unique.gene<-unique(gene.name)
-length(unique.gene)
+#length(unique.gene)
 summary.gene<-table(gene.name)
 #rownames of a store all the unique gene name
 #a value is count for specific gene
@@ -591,7 +716,7 @@ for(i in 1:length(summary.gene)){
   MA$A[i,]<-ma$A[rownames(ma)==name,]
   }
 }
-dim(MA[["M"]])
+#dim(MA[["M"]])
 colnames(MA[["M"]])<-colnames(ma$M);
 colnames(MA[["A"]])<-colnames(ma$A);
 rownames(MA[["M"]])<-rownames(summary.gene);
@@ -602,8 +727,8 @@ rownames(MA[["A"]])<-rownames(summary.gene);
 ## Statistical Analysis Results -Plan 2
 
 - (Same as plan 1) Using linear regression to adjust for batch effects
-```{r, echo=FALSE}
-table(info$Hybrid.day)
+```{r, echo=FALSE,cache=TRUE}
+#table(info$Hybrid.day)
 info.temp <- info
 
 info.temp$Hybrid.day <- as.factor(info.temp$Hybrid.day)
@@ -622,7 +747,7 @@ info.temp <- info.temp[which(substr(info$id,1,2)!="QC"),]
 #ma <- ma[,which(substr(info$id,1,2)!="QC")]
 m<- m[,which(substr(info$id,1,2)!="QC")]
 a<- a[,which(substr(info$id,1,2)!="QC")]
-table(info$case)
+#table(info$case)
 
 # remove 80013 since he has cold at blood draw #
 select <- which(info.temp$id!="80013")
@@ -631,7 +756,7 @@ a <- a[,select]
 info.temp <- info.temp[select,]
 ```
 
-```{r,echo=FALSE, est.m and lm function}
+```{r,echo=FALSE,cache=TRUE,echo=FALSE,message=FALSE}
 #require library
 library(qvalue)
 
@@ -717,7 +842,7 @@ est.m<-result[["est"]]
 ## Statistical Analysis Results -Plan 2
 
 - Moderated T test using R Limma package
-```{r, limma}
+```{r limma,cache=TRUE}
 #So we run everything in the orginal codes before paired t-test
 #And we use limma instead of pairted t test to fit the model
 
@@ -725,9 +850,14 @@ mm <-model.matrix(~0+id+case, data=info.temp)
 mm <- mm[,-11]
 mm <- mm[, -(19:24)]
 fit <- lmFit(est.m, mm)
+```
 
+## Statistical Analysis Results -Plan 2
+
+- Moderated T test using R Limma package
+
+```{r,message=FALSE}
 ebay <- eBayes(fit)
-
 top <- topTable(ebay, coef="case1", number=Inf, sort.by="p")
 head(top)
 mean(top$adj.P.Val<0.01)
@@ -738,8 +868,10 @@ mean(top$adj.P.Val<0.01)
 
 - Moderated T test using R Limma package
 *Plots*
-```{r, echo=FALSE}
+```{r, echo=FALSE,cache=TRUE,fig.align='center',fig.height=8,fig.width=15}
 p.cut <- 0.01
+q.cut<-0.001
+
 
 case.m <- est.m[,info$case==1]
 ctrl.m <- est.m[,info$case==0]
@@ -755,7 +887,14 @@ abline(h=p.cut,col=6,lwd=2)
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p value paired T",main="",col="lightpink")
 abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
+```
 
+## Statistical Analysis Results -Plan 2
+
+- Moderated T test using R Limma package
+*Plots*
+
+```{r,cache=TRUE,echo=FALSE}
 par(mfrow=c(1,1),font=2)
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=p.cut,col=6,lwd=2)
@@ -766,57 +905,70 @@ legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," p<",p.
 ## Statistical Analysis Results -Plan 2
 
 - GSEA using KEGG pathway database and CAMERA
-```{r}
+```{r,cache=TRUE,echo=FALSE}
 library(GSEABase)
-
+library(limma)
+```
+```{r,cache=TRUE}
 kegg <- getGmt("Data/c2.cp.kegg.v4.0.symbols.gmt")
-
 gene_ids <- geneIds(kegg)
-
+```
+```{r,cache=TRUE,echo=FALSE}
 est_new <- est.m
 row <- rownames(est_new)
 row_new <- sapply(strsplit(as.character(row),"_"), function(x) x[[3]])
 rownames(est_new) <- row_new
-
+```
+```{r,cache=TRUE}
 if (exists("ids2indices")) { 
-    sets_indices <- ids2indices(gene_ids, rownames(est_new))
+    sets_indices <- ids2indices(gene_ids, unique.gene)
 }
 if (exists("symbols2indices")) {
-    sets_indices <- symbols2indices(gene_ids, rownames(est_new))    
+    sets_indices <- symbols2indices(gene_ids, unique.gene)    
 }
-
 cont_matrix <- makeContrasts("case1", levels=mm)
-gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
+#gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
 #It's not working due to the NA's
-
 #So we change all the NA's to zero
 est_narm <- est_new
 est_narm[is.na(est_narm)] <- 0
 gsea_kegg <- camera(est_narm, sets_indices, design=mm, cont_matrix)
+```
 
-head(gsea_kegg)[1:10]
+## Statistical Analysis Results -Plan 2
+
+- GSEA using KEGG pathway database and CAMERA
+
+```{r,cache=TRUE}
+head(gsea_kegg)
 #now it worked but we don't have anything significant.
 ```
 
 ## Statistical Analysis Results -Plan 2
 
 - GSEA using GO pathway database and CAMERA
-```{r}
+```{r,cache=TRUE}
 go <- getGmt("Data/c5.all.v4.0.symbols.gmt")
 
 gene_ids_go <- geneIds(go)
 
 if (exists("ids2indices")) { 
-    sets_indices_go <- ids2indices(gene_ids_go, rownames(est_new))
+    sets_indices_go <- ids2indices(gene_ids_go, unique.gene)
 }
 if (exists("symbols2indices")) {
-    sets_indices_go <- symbols2indices(gene_ids_go, rownames(est_new))    
+    sets_indices_go <- symbols2indices(gene_ids_go, unique.gene)    
 }
 
 cont_matrix <- makeContrasts("case1", levels=mm)
 gsea_go <- camera(est_narm, sets_indices_go, design=mm, cont_matrix)
+```
 
-head(gsea_go)[1:10]
+## Statistical Analysis Results -Plan 2
+
+- GSEA using GO pathway database and CAMERA
+
+```{r,cache=TRUE}
+head(gsea_go)
 #also nothing significant!
 ```
 
