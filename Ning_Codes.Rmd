@@ -93,6 +93,15 @@ a <- a[,select]
 info.temp <- info.temp[select,]
 ```
 
+```{r,descriptive plot}
+boxplot(x=)
+
+#ANOVA
+lm1<-lm(MA$M[1,]~info.temp$Hybrid.day)
+anova(lm1)
+
+```
+
 ```{r,est.m and lm function}
 #require library
 library(qvalue)
