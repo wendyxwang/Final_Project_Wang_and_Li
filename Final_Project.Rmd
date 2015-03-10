@@ -322,7 +322,7 @@ length(result$genes)
 ```
 
 -GSEA analysis using GO pathways
-```{r}
+```{r, GSEA GO1}
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
 
@@ -435,7 +435,7 @@ head(gene.set)
 ```
 
 -Repeat GSEA analysis using KEGG pathways
-```{r}
+```{r,GESA KEGG1}
 # KEGG pathway on 12-16-2013 #
 gs.db <- "Data/c2.cp.kegg.v4.0.symbols.gmt"
 ```
