@@ -3,12 +3,12 @@ title: 'Final Project: GLANCE Study'
 author: "Wendy Wang and Ning Li"
 date: "Tuesday, March 10, 2015"
 output:
-  beamer_presentation: default
   ioslides_presentation:
     fig_caption: yes
     fig_retina: 1
     keep_md: yes
     smaller: yes
+  beamer_presentation: default
 ---
 
 ## Setting up some options
@@ -17,7 +17,7 @@ Let's first turn on the cache for increased performance and improved styling
 ```{r,cache=FALSE}
 # Set some global knitr options
 library("knitr")
-opts_chunk$set(tidy=TRUE, size='Huge',tidy.opts=list(blank=FALSE, width.cutoff=80), cache=TRUE, messages=FALSE)
+opts_chunk$set(tidy=TRUE, size='tiny',tidy.opts=list(blank=FALSE, width.cutoff=80), cache=TRUE, messages=FALSE)
 ```
 
 ##Reference
@@ -68,12 +68,12 @@ opts_chunk$set(tidy=TRUE, size='Huge',tidy.opts=list(blank=FALSE, width.cutoff=8
 ##Data collection
 
 - Blood samples were collected after each 28-day intervention period in the morning after a minimum of a 12-hour overnight fast.
-- Blood was drawn into a tube containing EDTA for plasma. All samples were aliquoted and stored at -80°C.
+- Blood was drawn into a tube containing EDTA for plasma. All samples were aliquoted and stored at -80 degree C.
 
 ##Proteomics Analysis
 
 - Plasma samples were evaluated on a customized antibody array populated with ~3,000 full-length antibodies, printed in triplicates.
-- Protein (200 µg) from a pool of albumin and IgG-depleted plasma were labeled with Cy5. Each sample was combined with reference sample labeled with Cy3.
+- Protein (200 g) from a pool of albumin and IgG-depleted plasma were labeled with Cy5. Each sample was combined with reference sample labeled with Cy3.
 - Unbound proteins were removed by washing and the slides scanned for Cy3 and Cy5 fluorescence in an Axon Genepix 4000B scanner.
 - The Cy5/Cy3 ratio determined the relative concentration of protein compared to reference.
 - Most (>85%) antibodies on the array had coefficients of variation, for triplicates, of less than 10%. Antibodies with CV>10% were excluded for further analysis.
