@@ -88,8 +88,9 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 ##Statistical Analysis
 
 **Overview of data**
-
-```{r}
+* We delte any genes with more than 50% missing values.
+* Now total 2938 antibodies(genes), there may exist duplication. 
+```{r,echo=FALSE,reading data}
 #load packages
 library(limma)
 library(qvalue)
@@ -134,7 +135,21 @@ table(info$intervention)
 - (Same as plan 1) Using linear regression to adjust for batch effects
 - Moderated T test using R Limma package
 - GSEA using GEGG and GO pathway databases and CAMERA
+## Statistical Analysis Results -Plan 1
+- Batch effects check
+```{r,echo=FALSE,batch}
+batch.m<-ma$M
+case +Hybrid.day+box+position+gender
+image(batch.m[,info$gender==1])
+image(batch.m[,info$gender==0])
 
+Pvalue<-NULL;
+for(i in 1:dim(batch.m)[1]){
+  fit<-lm(batch.m[i,]~as.factor(info$Hybrid.day))
+  Pvalue<-c(Pvalue,anova(fit)$"Pr(>F)"[1])
+}
+
+```
 ## Statistical Analysis Results -Plan 1
 
 - Using linear regression to adjust for batch effects
@@ -186,7 +201,7 @@ estim.casecont <- function(mylm,info.temp,m,a){
 }
 ```
 
-```{r}
+```{r,echo=FALSE,lm-definition}
 lm.fun <- function(sub.ma,sub.info){
   sub.info$Hybrid.day <- as.factor(sub.info$Hybrid.day)
   sub.info$case <- as.factor(sub.info$case)
@@ -227,7 +242,7 @@ lm.fun <- function(sub.ma,sub.info){
 - Using linear regression to adjust for batch effects
 
 *Remove the batch effects based on lm.fun*
-```{r, batch effects}
+```{r, fig.height=8,fig.width=15,  batch effects}
 result <- lm.fun(ma,info)
 result.all <- result$result
 est.m <- result$est
