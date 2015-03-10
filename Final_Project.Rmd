@@ -220,6 +220,9 @@ lm.fun <- function(sub.ma,sub.info){
 }
 ```
 
+## Statistical Analysis Results -Plan 1
+
+- Using linear regression to adjust for batch effects
 *Remove the batch effects based on lm.fun*
 ```{r}
 result <- lm.fun(ma,info)
@@ -241,6 +244,7 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 ## Statistical Analysis Results -Plan 1
 
 - Paired t-test comparing treatment and placebo
+*Paired t-test*
 ```{r}
 table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
@@ -260,6 +264,10 @@ effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(
 qvalue <- qvalue(p.t,robust=T)$qvalues
 ```
 
+## Statistical Analysis Results -Plan 1
+
+- Paired t-test comparing treatment and placebo
+*plots*
 ```{r}
 p.cut <- 0.01
 q.cut <- 0.001
@@ -271,7 +279,9 @@ abline(h=p.cut,col=6,lwd=2)
 hist(p.t,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p value paired T",main="",col="lightpink")
 abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(p.t<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(p.t<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
+```
 
+```{r}
 par(mfrow=c(1,1),font=2)
 hist(qvalue,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
@@ -319,7 +329,9 @@ length(unique(result$genes))
 length(result$genes)
 ```
 
--GSEA analysis using GO pathways
+## Statistical Analysis Results -Plan 1
+
+- GSEA analysis using GO pathways
 ```{r}
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
@@ -431,6 +443,8 @@ gene.set <- data.frame(MasterGroup=seq(ncol(A)),GS.Name=colnames(A),GS.descrip=g
 gene.set <- gene.set[order(gene.set$wilc.p),]
 head(gene.set)
 ```
+
+## Statistical Analysis Results -Plan 1
 
 -Repeat GSEA analysis using KEGG pathways
 ```{r}
