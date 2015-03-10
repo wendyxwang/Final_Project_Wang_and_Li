@@ -139,7 +139,9 @@ table(info$intervention)
 
 - Using linear regression to adjust for batch effects
 *Set up the functions*
-```{r,echo=FALSE}
+
+```{r,echo=FALSE,function definition}
+
 table(info$Hybrid.day)
 sub.ma <- ma
 sub.info <- info
@@ -219,11 +221,13 @@ lm.fun <- function(sub.ma,sub.info){
 }
 ```
 
+
 ## Statistical Analysis Results -Plan 1
 
 - Using linear regression to adjust for batch effects
+
 *Remove the batch effects based on lm.fun*
-```{r}
+```{r, batch effects}
 result <- lm.fun(ma,info)
 result.all <- result$result
 est.m <- result$est
@@ -242,9 +246,12 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 
 ## Statistical Analysis Results -Plan 1
 
+*Q value
 - Paired t-test comparing treatment and placebo
+
 *Paired t-test*
-```{r}
+```{r,paired t testing}
+
 table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
 info[1,]
@@ -263,11 +270,14 @@ effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(
 qvalue <- qvalue(p.t,robust=T)$qvalues
 ```
 
+
 ## Statistical Analysis Results -Plan 1
 
 - Paired t-test comparing treatment and placebo
 *plots*
-```{r}
+
+```{r,Qvalue plot}
+
 p.cut <- 0.01
 q.cut <- 0.001
 
@@ -294,7 +304,7 @@ head(out)
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using Wilcoxon Test
-```{r}
+```{r, GSEA-wilcoxon test}
 out$genes <- sapply(strsplit(as.character(out$Name),"_"), function(x) x[[3]])
 result.save <- result <- out
 
@@ -328,10 +338,15 @@ length(unique(result$genes))
 length(result$genes)
 ```
 
+
+-GSEA analysis using GO pathways
+
+=======
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using GO pathways
-```{r}
+```{r, GSEA GO1}
+
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
 
@@ -446,7 +461,7 @@ head(gene.set)
 ## Statistical Analysis Results -Plan 1
 
 -Repeat GSEA analysis using KEGG pathways
-```{r}
+```{r,GESA KEGG1}
 # KEGG pathway on 12-16-2013 #
 gs.db <- "Data/c2.cp.kegg.v4.0.symbols.gmt"
 ```

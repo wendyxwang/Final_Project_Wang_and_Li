@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r}
+rm(ls())
 library(limma)
 
 load("E:\\UW\\winter2015\\BIOSTAT578\\project\\try\\ma_afterNorm_organized_18pairs.Rdata")
