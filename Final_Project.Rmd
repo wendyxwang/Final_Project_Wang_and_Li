@@ -90,7 +90,7 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 **Overview of data**
 * We delte any genes with more than 50% missing values.
 * Now total 2938 antibodies(genes), there may exist duplication. 
-```{r,echo=FALSE,reading data}
+```{r readingdata,echo=FALSE}
 #load packages
 library(limma)
 library(qvalue)
@@ -137,25 +137,54 @@ table(info$intervention)
 - GSEA using GEGG and GO pathway databases and CAMERA
 ## Statistical Analysis Results -Plan 1
 - Batch effects check
-```{r,echo=FALSE,batch}
+```{r batch,echo=FALSE,fig.width=15,fig.height=8}
 batch.m<-ma$M
-case +Hybrid.day+box+position+gender
-image(batch.m[,info$gender==1])
-image(batch.m[,info$gender==0])
 
-Pvalue<-NULL;
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+plotdata<-melt(batch.m)
+plotdata$gender<-rep(info$gender,each=dim(batch.m)[1])
+p0 <- ggplot(plotdata[plotdata$gender==0,], aes(y=Var2,x=Var1,fill=value)) + geom_tile() + scale_fill_gradient(low="white", high="darkblue")+ xlab("gene") + ylab("obs")+theme(axis.ticks = element_blank(), axis.text.y = element_blank())+ggtitle("genes expression for male")
+p1 <- ggplot(plotdata[plotdata$gender==1,], aes(y=Var2,x=Var1)) + geom_tile(aes(fill=value)) + scale_fill_gradient(low="white", high="darkblue") + xlab("obs") + ylab("gene")+theme(axis.ticks = element_blank(), axis.text.y = element_blank())+ggtitle("genes expression for female")
+grid.arrange( p0, p1, ncol=2)
+
+P.Hd<-P.b<-P.p<-P.g<-NULL;
 for(i in 1:dim(batch.m)[1]){
-  fit<-lm(batch.m[i,]~as.factor(info$Hybrid.day))
-  Pvalue<-c(Pvalue,anova(fit)$"Pr(>F)"[1])
+  fit1<-lm(batch.m[i,]~as.factor(info$Hybrid.day))
+  fit2<-lm(batch.m[i,]~as.factor(info$box))
+  fit3<-lm(batch.m[i,]~as.factor(info$position))
+  fit4<-lm(batch.m[i,]~as.factor(info$gender))
+  P.Hd<-c(P.Hd,anova(fit1)$"Pr(>F)"[1])
+  P.b<-c(P.b,anova(fit2)$"Pr(>F)"[1])
+  P.p<-c(P.p,anova(fit3)$"Pr(>F)"[1])
+  P.g<-c(P.Hd,anova(fit4)$"Pr(>F)"[1])
 }
-
+Table<-matrix(0,ncol=4,nrow=2)
+Table[1,1]<-mean(P.Hd<.05)#0.3158611
+Table[1,2]<-mean(P.b<.05)#0.5245065
+Table[1,3]<-mean(P.p<.05)#0.01565691
+Table[1,4]<-mean(P.g<.05)#0.3157537
+Table[2,1]<-mean(p.adjust(P.Hd, method ="bonferroni")<0.05)# 0.02791014
+Table[2,2]<-mean(p.adjust(P.b, method ="bonferroni")<0.05)#0.01599728
+Table[2,3]<-mean(p.adjust(P.p, method ="bonferroni")<0.05)#0
+Table[2,4]<-mean(p.adjust(P.g, method ="bonferroni")<0.05)# 0.02790065
+rownames(Table)<-c("proportion(p-value<.05)","proportion(bonferroni<.05)")
+colnames(Table)<-c("Hybrid.day","box","position","gender")
 ```
+
+```{r,message=FALSE}
+round(Table,digits=3)
+```
+
+
+
 ## Statistical Analysis Results -Plan 1
 
 - Using linear regression to adjust for batch effects
 *Set up the functions*
 
-```{r,echo=FALSE,function definition}
+```{r function definition,echo=FALSE}
 
 table(info$Hybrid.day)
 sub.ma <- ma
@@ -234,6 +263,7 @@ lm.fun <- function(sub.ma,sub.info){
 #  return(result.all)
   return(list(result=result.all,est=est.m))  
 }
+
 ```
 
 
@@ -261,11 +291,11 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 
 ## Statistical Analysis Results -Plan 1
 
-*Q value
+
 - Paired t-test comparing treatment and placebo
 
 *Paired t-test*
-```{r,paired t testing}
+```{r paired t testing,echo=FALSE}
 
 table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
@@ -283,6 +313,7 @@ p.t <- sapply(1:nrow(case.m),function(x) t.test(case.m[x,],ctrl.m[x,],paired=T)$
 
 effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(ctrl.m[x,],na.rm=T))/sd(ctrl.m[x,],na.rm=T))
 qvalue <- qvalue(p.t,robust=T)$qvalues
+bonfer<-p.adjust(p.t, method = "bonferroni")
 ```
 
 
@@ -290,8 +321,8 @@ qvalue <- qvalue(p.t,robust=T)$qvalues
 
 - Paired t-test comparing treatment and placebo
 *plots*
-
-```{r,Qvalue plot}
+*The therethod value for q value and bonferroni test cut is 0.001.
+```{r Qvalueplot,echo=FALSE}
 
 p.cut <- 0.01
 q.cut <- 0.001
@@ -305,27 +336,38 @@ abline(v=p.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(p.t<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(p.t<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 ```
 
-```{r}
-par(mfrow=c(1,1),font=2)
+```{r,fig.width=8,fig.height=20}
+par(mfrow=c(2,1),font=2)
 hist(qvalue,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(qvalue<q.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(qvalue<q.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 
-out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue)
+hist(bonfer,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
+abline(v=q.cut,col=6,lwd=2)
+legend("topright",bty='n',legend=paste(sum(bonfer<q.cut,na.rm=T)," p.bonfer<",q.cut," among ",nrow(case.m)," abs (", round(mean(bonfer<q.cut,na.rm=T)*100,2),"%)",sep=""))
+```
+```{r,echo=FALSE}
+out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue,bonfer)
 out <- out[order(out$p.t),]
+```
+
+```{r}
 head(out)
+
 ```
 
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using Wilcoxon Test
-```{r, GSEA-wilcoxon test}
+....
+```{r GSEA-wilcoxon test,echo=FALSE}
 out$genes <- sapply(strsplit(as.character(out$Name),"_"), function(x) x[[3]])
 result.save <- result <- out
 
 length(unique(result$genes))
 result$sign.p <- ifelse(result$effect.size<0,-1,1)*(1-result$p.t)
-hist(result$sign.p,breaks=20)
+p<-ggplot(data=result,aes(x=sign.p))+geom_histogram(colour = "darkgreen", fill = "light blue")
+p
 
 # Rearrange gene seperate by coma #
 arrange <- function(data,symbols){
@@ -360,7 +402,7 @@ length(result$genes)
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using GO pathways
-```{r, GSEA GO1}
+```{r GSEA GO1}
 
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
@@ -476,7 +518,7 @@ head(gene.set)
 ## Statistical Analysis Results -Plan 1
 
 -Repeat GSEA analysis using KEGG pathways
-```{r,GESA KEGG1}
+```{r GESA KEGG1}
 # KEGG pathway on 12-16-2013 #
 gs.db <- "Data/c2.cp.kegg.v4.0.symbols.gmt"
 ```
@@ -583,9 +625,7 @@ sig.negative <- apply(A,2,function(x) sum(result.save$effect.size[which(result.s
 x <- A[,1]
 sig.positive[1]
 sig.negative[1]
-```
 
-```{r}
 sum(result.save$p.t[which(result.save$Name%in%unique(A.abnames[x==1]))]<0.01,na.rm=T)
 
 gene.set <- data.frame(MasterGroup=seq(ncol(A)),GS.Name=colnames(A),GS.descrip=gs.desc,GS.num.gene=num.geneset,num.gene.in=num.gene,num.abprobe.in=num.ab,sig.pairt,sig.positive,sig.negative,wilc.p=pvalue,qvalue=qvalue,gene.names=name)
@@ -597,6 +637,29 @@ head(gene.set)
 
 - Clean duplicated antibodies
 ```{r,delete duplicate}
+rm(list=ls())
+library(limma)
+
+load("E:\\UW\\winter2015\\BIOSTAT578\\project\\try\\ma_afterNorm_organized_18pairs.Rdata")
+ls()
+#add is read-in from orginal dataset and output to organized data
+#m is the matching indicator for ma and info$Array.name
+ls(ma)
+#where ma is the dataset with expression level(M and A) and weights
+#M has been normalized based on placebo distribution
+#only full length of antibodies are kept in ma, ab.name and gene.name
+str(gene.name)#3586
+length(unique(gene.name))#2259
+#delete genes with >50% missing data
+delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
+length(delete)#648
+ma <- ma[!1:nrow(ma)%in%delete,]
+dim(ma)#2938
+#we do the same thing for gene.name
+gene.name<-gene.name[!1:length(gene.name)%in%delete]
+length(rownames(ma$genes))#2938
+length(gene.name)#2938
+rownames(ma)<-gene.name
 #find unique gene
 unique.gene<-unique(gene.name)
 length(unique.gene)#1892
@@ -764,7 +827,7 @@ mean(top$adj.P.Val<0.01)
 *Plots*
 ```{r, echo=FALSE}
 p.cut <- 0.01
-
+q.cut<-0.001
 par(mfrow=c(1,2),font=2)
 plot(top$logFC,top$adj.P.Val,pch=19,col="blue",xlab="Effect Size",ylab="p value paired T",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut&top$logFC>0,na.rm=T)," +\n",sum(top$adj.P.Val<p.cut&top$logFC<0,na.rm=T)," - ",sep=""))
