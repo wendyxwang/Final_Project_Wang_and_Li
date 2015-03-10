@@ -799,4 +799,11 @@ head(gsea_go)[1:10]
 ```
 
 
-- Heatmap plots of significant results
+## Conclusion and Discussion
+
+- Results for individual proteins are similar
+- Results for pathway analysis are very different.
+
+**Why?**
+- We set all missing values to 0
+- Different methods: paired t-test vs. LIMMA; Wilcoxon test vs. CAMERA
