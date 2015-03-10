@@ -140,7 +140,7 @@ table(info$intervention)
 
 - Using linear regression to adjust for batch effects
 *Set up the functions*
-```{r}
+```{r,function definition}
 table(info$Hybrid.day)
 sub.ma <- ma
 sub.info <- info
@@ -218,8 +218,10 @@ lm.fun <- function(sub.ma,sub.info){
 }
 ```
 
+*Different expression based on batch effects
+
 *Remove the batch effects based on lm.fun*
-```{r}
+```{r, batch effects}
 result <- lm.fun(ma,info)
 result.all <- result$result
 est.m <- result$est
@@ -238,8 +240,9 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 
 ## Statistical Analysis Results -Plan 1
 
+*Q value
 - Paired t-test comparing treatment and placebo
-```{r}
+```{r,paired t testing}
 table(colnames(est.m)==info$Array.name)
 info$id <- as.character(info$id)
 info[1,]
@@ -258,7 +261,7 @@ effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(
 qvalue <- qvalue(p.t,robust=T)$qvalues
 ```
 
-```{r}
+```{r,Qvalue plot}
 p.cut <- 0.01
 q.cut <- 0.001
 
@@ -275,7 +278,6 @@ hist(qvalue,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$ca
 abline(v=q.cut,col=6,lwd=2)
 legend("topright",bty='n',legend=paste(sum(qvalue<q.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(qvalue<q.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 
-gene <- gene.name[gene.name %in% ]
 
 out <- data.frame(Name=ma$genes$Name,effect.size,p.t,qvalue)
 out <- out[order(out$p.t),]
@@ -285,7 +287,7 @@ head(out)
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using Wilcoxon Test
-```{r}
+```{r, GSEA-wilcoxon test}
 out$genes <- sapply(strsplit(as.character(out$Name),"_"), function(x) x[[3]])
 result.save <- result <- out
 
