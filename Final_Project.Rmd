@@ -808,6 +808,11 @@ head(gsea_go)[1:10]
 #also nothing significant!
 ```
 
+##Limitation
+
+- Small sample size
+- Only detecting proteints that have antibodies on the microarray
+
 
 ## Conclusion and Discussion
 
