@@ -23,7 +23,7 @@ opts_chunk$set(tidy=TRUE, tidy.opts=list(blank=FALSE, width.cutoff=60), cache=TR
 
 **Reference:**
 
-**Navarro S WE, Kantor ED, Zhang Y, Rho J, Song X, Milne GL, Lampe PD, Lampe JW. Randomized trial of glucosamine and chondroitin supplementation on inflammation and oxidative stress biomarkers and plasma proteomics profiles in healthy humans. PLoS One In press.**
+**Navarro S, White E, Kantor ED, Zhang Y, Rho J, Song X, Milne GL, Lampe PD, Lampe JW. Randomized trial of glucosamine and chondroitin supplementation on inflammation and oxidative stress biomarkers and plasma proteomics profiles in healthy humans. PLoS One. 2015; 10(2):e0117534**
 
 - Background
 - Study Design and Data Collection 
@@ -134,7 +134,6 @@ table(info$intervention)
 - (Same as plan 1) Using linear regression to adjust for batch effects
 - Moderated T test using R Limma package
 - GSEA using GEGG and GO pathway databases and CAMERA
-- Heatmap plots of significant results
 
 ## Statistical Analysis Results -Plan 1
 
