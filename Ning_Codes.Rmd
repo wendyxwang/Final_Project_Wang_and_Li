@@ -94,12 +94,37 @@ info.temp <- info.temp[select,]
 ```
 
 ```{r,descriptive plot}
-boxplot(x=)
 
+boxplot(x=)
+par(mfrow=c(1,1))
+boxplot(MA$M[,info.temp$box=="A"])
+image(MA$M[,info.temp$box=="A"])
+image(MA$M[,info.temp$box=="B"])
+image(MA$M[,info.temp$box=="C"])
 #ANOVA
-lm1<-lm(MA$M[1,]~info.temp$Hybrid.day)
+N=dim(MA$M)[1]
+lm1<-lm(as.vector(t(MA$M))~rep(info.temp$Hybrid.day,N))
+anova(lm1)
+lm2<-lm(as.vector(t(MA$M))~rep(info.temp$box,N))
+anova(lm2)
+lm1<-lm(as.vector(t(MA$M))~rep(info.temp$Hybrid.day,N))
+anova(lm1)
+lm1<-lm(as.vector(t(MA$M))~rep(info.temp$Hybrid.day,N))
+anova(lm1)
+lm1<-lm(as.vector(t(MA$M))~rep(info.temp$Hybrid.day,N))
+anova(lm1)
+lm1<-lm(as.vector(t(MA$M))~rep(info.temp$Hybrid.day,N))
 anova(lm1)
 
+
+library(ggplot2)
+library(reshape2)
+ 
+#ggplot likes the data 'melted' one value per row
+m <-melt(MA$M)
+p <- ggplot(data=m, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+  
+p
 ```
 
 ```{r,est.m and lm function}
