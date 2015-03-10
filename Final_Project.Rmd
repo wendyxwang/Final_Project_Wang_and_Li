@@ -107,6 +107,11 @@ length(unique(gene.name))
 delete <- which(apply(is.na(ma$M),1,function(x) sum(x)/length(x)*100)>=50)
 ma <- ma[!1:nrow(ma)%in%delete,]
 dim(ma)
+#we do the same thing for gene.name
+gene.name<-gene.name[!1:length(gene.name)%in%delete]
+length(rownames(ma$genes))#2938
+length(gene.name)#2938
+rownames(ma)<-gene.name
 
 table(info$intervention)
 ```
@@ -184,7 +189,8 @@ round(Table,digits=3)
 - Using linear regression to adjust for batch effects
 *Set up the functions*
 
-```{r function definition,echo=FALSE}
+
+```{r functiondefinition,echo=FALSE}
 
 table(info$Hybrid.day)
 sub.ma <- ma
@@ -230,7 +236,7 @@ estim.casecont <- function(mylm,info.temp,m,a){
 }
 ```
 
-```{r,echo=FALSE,lm-definition}
+```{r,echo=FALSE}
 lm.fun <- function(sub.ma,sub.info){
   sub.info$Hybrid.day <- as.factor(sub.info$Hybrid.day)
   sub.info$case <- as.factor(sub.info$case)
@@ -266,13 +272,13 @@ lm.fun <- function(sub.ma,sub.info){
 
 ```
 
-
 ## Statistical Analysis Results -Plan 1
 
 - Using linear regression to adjust for batch effects
-
 *Remove the batch effects based on lm.fun*
-```{r, fig.height=8,fig.width=15,  batch effects}
+
+```{r, fig.height=8,fig.width=15}
+
 result <- lm.fun(ma,info)
 result.all <- result$result
 est.m <- result$est
@@ -291,10 +297,9 @@ legend("topright",bty='n',legend=paste(sum(result.all$pvalue<0.05,na.rm=T)," sig
 
 ## Statistical Analysis Results -Plan 1
 
-
 - Paired t-test comparing treatment and placebo
-
 *Paired t-test*
+
 ```{r paired t testing,echo=FALSE}
 
 table(colnames(est.m)==info$Array.name)
@@ -315,7 +320,6 @@ effect.size <- sapply(1:nrow(case.m),function(x) (mean(case.m[x,],na.rm=T)-mean(
 qvalue <- qvalue(p.t,robust=T)$qvalues
 bonfer<-p.adjust(p.t, method = "bonferroni")
 ```
-
 
 ## Statistical Analysis Results -Plan 1
 
@@ -359,8 +363,10 @@ head(out)
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using Wilcoxon Test
+
 ....
 ```{r GSEA-wilcoxon test,echo=FALSE}
+
 out$genes <- sapply(strsplit(as.character(out$Name),"_"), function(x) x[[3]])
 result.save <- result <- out
 
@@ -395,15 +401,11 @@ length(unique(result$genes))
 length(result$genes)
 ```
 
-
--GSEA analysis using GO pathways
-
-=======
 ## Statistical Analysis Results -Plan 1
 
 - GSEA analysis using GO pathways
-```{r GSEA GO1}
 
+```{r GSEA GO1}
 # GO pathway on 12-16-2013 #
 gs.db <- "Data/c5.all.v4.0.symbols.gmt"
 
@@ -518,7 +520,9 @@ head(gene.set)
 ## Statistical Analysis Results -Plan 1
 
 -Repeat GSEA analysis using KEGG pathways
+
 ```{r GESA KEGG1}
+
 # KEGG pathway on 12-16-2013 #
 gs.db <- "Data/c2.cp.kegg.v4.0.symbols.gmt"
 ```
@@ -636,7 +640,7 @@ head(gene.set)
 ## Statistical Analysis Results -Plan 2
 
 - Clean duplicated antibodies
-```{r,delete duplicate}
+```{r delete duplicate}
 rm(list=ls())
 library(limma)
 
@@ -662,7 +666,7 @@ length(gene.name)#2938
 rownames(ma)<-gene.name
 #find unique gene
 unique.gene<-unique(gene.name)
-length(unique.gene)#1892
+length(unique.gene)
 summary.gene<-table(gene.name)
 #rownames of a store all the unique gene name
 #a value is count for specific gene
@@ -719,7 +723,7 @@ a <- a[,select]
 info.temp <- info.temp[select,]
 ```
 
-```{r,echo=FALSE, est.m and lm function}
+```{r,echo=FALSE}
 #require library
 library(qvalue)
 
@@ -819,6 +823,7 @@ ebay <- eBayes(fit)
 top <- topTable(ebay, coef="case1", number=Inf, sort.by="p")
 head(top)
 mean(top$adj.P.Val<0.01)
+#More than 50% genes had significant changes.
 ```
 
 ## Statistical Analysis Results -Plan 2
@@ -828,6 +833,14 @@ mean(top$adj.P.Val<0.01)
 ```{r, echo=FALSE}
 p.cut <- 0.01
 q.cut<-0.001
+
+
+case.m <- est.m[,info$case==1]
+ctrl.m <- est.m[,info$case==0]
+
+case.info <- info[info$case==1,]
+ctrl.info <- info[info$case==0,]
+
 par(mfrow=c(1,2),font=2)
 plot(top$logFC,top$adj.P.Val,pch=19,col="blue",xlab="Effect Size",ylab="p value paired T",main=paste(sum(info$case==1)," GC treated vs. ",sum(info$case==0)," Placebo",sep=""))
 legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut&top$logFC>0,na.rm=T)," +\n",sum(top$adj.P.Val<p.cut&top$logFC<0,na.rm=T)," - ",sep=""))
@@ -839,8 +852,8 @@ legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," p<",p.
 
 par(mfrow=c(1,1),font=2)
 hist(top$adj.P.Val,breaks=40,ylab=paste(sum(info$case==1)," GC treated vs ",sum(info$case==0)," Placebo",sep=""),xlab="p",main="",col="lightpink")
-abline(v=q.cut,col=6,lwd=2)
-legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," q<",q.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
+abline(v=p.cut,col=6,lwd=2)
+legend("topright",bty='n',legend=paste(sum(top$adj.P.Val<p.cut,na.rm=T)," p<",p.cut," among ",nrow(case.m)," abs (", round(sum(top$adj.P.Val<p.cut,na.rm=T)/nrow(case.m)*100,2),"%)",sep=""))
 
 ```
 
@@ -867,7 +880,7 @@ if (exists("symbols2indices")) {
 }
 
 cont_matrix <- makeContrasts("case1", levels=mm)
-gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
+#gsea <- camera(est_new, sets_indices, design=mm, cont_matrix)
 #It's not working due to the NA's
 
 #So we change all the NA's to zero
