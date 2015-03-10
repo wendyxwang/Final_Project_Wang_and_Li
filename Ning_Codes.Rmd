@@ -183,6 +183,7 @@ lm.fun <- function(sub.ma,sub.info,gene.name){
 result<-lm.fun(MA,info.temp,unique.gene)
 ls(result)
 est.m<-result[["est"]]
+rownames(est.m)<-unique.gene
 
 ```
 
@@ -212,14 +213,14 @@ mean(top$adj.P.Val<0.01)# 0.5628964
 library(GSEABase)
 library(limma)
 
-kegg <- getGmt("Data/c2.cp.kegg.v4.0.symbols.gmt")
+kegg <- getGmt("c2.cp.kegg.v4.0.symbols.gmt")
 
 gene_ids <- geneIds(kegg)
 
 est_new <- est.m
 row <- rownames(est_new)
-row_new <- sapply(strsplit(as.character(row),"_"), function(x) x[[3]])
-rownames(est_new) <- row_new
+#row_new <- sapply(strsplit(as.character(row),"_"), function(x) x[[3]])
+#rownames(est_new) <- row_new
 
 if (exists("ids2indices")) { 
     sets_indices <- ids2indices(gene_ids, rownames(est_new))
@@ -239,7 +240,7 @@ gsea_kegg <- camera(est_narm, sets_indices, design=mm, cont_matrix)
 
 ```{r}
 #see how it goes with GO
-go <- getGmt("Data/c5.all.v4.0.symbols.gmt")
+go <- getGmt("c5.all.v4.0.symbols.gmt")
 
 gene_ids_go <- geneIds(go)
 
